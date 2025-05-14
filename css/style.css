@@ -1,0 +1,27 @@
+/* Menambahkan font Poppins */
+body {
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Animasi untuk mobile menu */
+#mobile-menu {
+    transition: all 0.3s ease;
+}
+
+/* Efek hover untuk card kost */
+.transform:hover {
+    transform: translateY(-5px);
+}
+
+/* Style untuk tombol */
+.btn-primary {
+    background-color: #3b82f6;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
