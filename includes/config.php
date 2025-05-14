@@ -1,13 +1,10 @@
-<!-- includes/config.php -->
 <?php
-$host = 'localhost';
+$host     = 'localhost';
 $username = 'root';
 $password = '';
-$database = 'rekos_db';
+$database = 'rekos_db';  // pastikan ini sesuai
 
 $conn = new mysqli($host, $username, $password, $database);
-
 if ($conn->connect_error) {
     die("Koneksi gagal: " . $conn->connect_error);
 }
-?>
