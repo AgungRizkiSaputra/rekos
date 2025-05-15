@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.0
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 14, 2025 at 04:12 AM
--- Server version: 10.4.25-MariaDB
--- PHP Version: 8.1.10
+-- Generation Time: May 15, 2025 at 02:38 PM
+-- Server version: 10.4.32-MariaDB
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -34,7 +34,7 @@ CREATE TABLE `alternatif` (
   `harga` int(11) NOT NULL,
   `deskripsi` text DEFAULT NULL,
   `gambar` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `alternatif`
@@ -47,6 +47,30 @@ INSERT INTO `alternatif` (`id_alternatif`, `nama_alternatif`, `alamat`, `harga`,
 (4, 'Kost D', 'Jl. Diponegoro No. 15', 1000000, 'Kost ekonomis dengan fasilitas standar', 'kosD.webp'),
 (5, 'Kost E', 'Jl. Gatot Subroto No. 30', 2000000, 'Kost premium full furnished', 'kosE.webp'),
 (6, 'Kost F', 'Jl. Ahmad Yani No. 12', 1400000, 'Kost strategis dekat pusat perbelanjaan', 'kosF.webp');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `gambar_interior`
+--
+
+CREATE TABLE `gambar_interior` (
+  `id` int(11) NOT NULL,
+  `id_alternatif` int(11) DEFAULT NULL,
+  `nama_file` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `gambar_interior`
+--
+
+INSERT INTO `gambar_interior` (`id`, `id_alternatif`, `nama_file`) VALUES
+(1, 1, 'kosA1.webp'),
+(2, 1, 'kosA2.webp'),
+(3, 1, 'kosA3.webp'),
+(4, 1, 'kosA4.webp'),
+(5, 1, 'kosA5.webp'),
+(6, 1, 'kosA6.webp');
 
 -- --------------------------------------------------------
 
@@ -65,16 +89,16 @@ CREATE TABLE `kos` (
   `gambar` varchar(255) DEFAULT NULL,
   `skor` decimal(5,4) DEFAULT 0.0000,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `kos`
 --
 
 INSERT INTO `kos` (`id`, `nama`, `harga`, `deskripsi_singkat`, `deskripsi_lengkap`, `alamat`, `fasilitas`, `gambar`, `skor`, `created_at`) VALUES
-(1, 'Kost E', '2000000.00', 'Kost premium full furnished', 'Kost E adalah kost premium dengan fasilitas lengkap dan mewah. Kamar sudah termasuk furniture berkualitas tinggi dengan desain modern.', 'Jl. Menteng Raya No. 12, Jakarta Pusat', 'AC, Kamar Mandi Dalam, TV, Lemari, Kasur, Meja Kerja, WiFi, Dapur Bersama, Laundry', NULL, '0.0000', '2025-04-14 09:40:27'),
-(2, 'Kost A', '1500000.00', 'Kost nyaman dekat kampus dengan fasilitas lengkap', 'Kost A berlokasi strategis dekat dengan kampus utama. Lingkungan yang nyaman dan aman untuk mahasiswa.', 'Jl. Kampus Barat No. 45, Depok', 'AC, Kamar Mandi Dalam, Lemari, Kasur, Meja Belajar, WiFi, Parkir Motor', NULL, '0.0000', '2025-04-14 09:40:27'),
-(3, 'Kost B', '1200000.00', 'Kost murah dengan lokasi strategis', 'Kost B menawarkan harga terjangkau dengan lokasi yang sangat strategis dekat pusat kota dan transportasi umum.', 'Jl. Sudirman No. 78, Jakarta Selatan', 'Kipas Angin, Kamar Mandi Dalam, Lemari, Kasur, WiFi, Parkir Motor', NULL, '0.0000', '2025-04-14 09:40:27');
+(1, 'Kost E', 2000000.00, 'Kost premium full furnished', 'Kost E adalah kost premium dengan fasilitas lengkap dan mewah. Kamar sudah termasuk furniture berkualitas tinggi dengan desain modern.', 'Jl. Menteng Raya No. 12, Jakarta Pusat', 'AC, Kamar Mandi Dalam, TV, Lemari, Kasur, Meja Kerja, WiFi, Dapur Bersama, Laundry', NULL, 0.0000, '2025-04-14 09:40:27'),
+(2, 'Kost A', 1500000.00, 'Kost nyaman dekat kampus dengan fasilitas lengkap', 'Kost A berlokasi strategis dekat dengan kampus utama. Lingkungan yang nyaman dan aman untuk mahasiswa.', 'Jl. Kampus Barat No. 45, Depok', 'AC, Kamar Mandi Dalam, Lemari, Kasur, Meja Belajar, WiFi, Parkir Motor', NULL, 0.0000, '2025-04-14 09:40:27'),
+(3, 'Kost B', 1200000.00, 'Kost murah dengan lokasi strategis', 'Kost B menawarkan harga terjangkau dengan lokasi yang sangat strategis dekat pusat kota dan transportasi umum.', 'Jl. Sudirman No. 78, Jakarta Selatan', 'Kipas Angin, Kamar Mandi Dalam, Lemari, Kasur, WiFi, Parkir Motor', NULL, 0.0000, '2025-04-14 09:40:27');
 
 -- --------------------------------------------------------
 
@@ -87,7 +111,7 @@ CREATE TABLE `kriteria` (
   `nama_kriteria` varchar(100) NOT NULL,
   `bobot` float NOT NULL,
   `jenis` enum('benefit','cost') NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `kriteria`
@@ -111,7 +135,7 @@ CREATE TABLE `nilai_alternatif` (
   `id_alternatif` int(11) NOT NULL,
   `id_kriteria` int(11) NOT NULL,
   `nilai` float NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `nilai_alternatif`
@@ -149,6 +173,28 @@ INSERT INTO `nilai_alternatif` (`id`, `id_alternatif`, `id_kriteria`, `nilai`) V
 (29, 6, 4, 4),
 (30, 6, 5, 3);
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+  `id` int(11) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `users`
+--
+
+INSERT INTO `users` (`id`, `name`, `email`, `password`, `created_at`) VALUES
+(1, 'test', 'tes@gmail.com', '$2y$10$2Tp9SYJfijxZTYSPFTfMduPMlniOHf.W48UCUCGRUEJUCvhdnLkSG', '2025-05-15 11:40:42'),
+(2, 'uji', 'uji@gmail.com', '$2y$10$zik07RdZBwe3It2wufi/5ueZOpp5jt1hhNUaC.llmDyiAS2Sp10JO', '2025-05-15 12:18:03');
+
 --
 -- Indexes for dumped tables
 --
@@ -158,6 +204,13 @@ INSERT INTO `nilai_alternatif` (`id`, `id_alternatif`, `id_kriteria`, `nilai`) V
 --
 ALTER TABLE `alternatif`
   ADD PRIMARY KEY (`id_alternatif`);
+
+--
+-- Indexes for table `gambar_interior`
+--
+ALTER TABLE `gambar_interior`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_alternatif` (`id_alternatif`);
 
 --
 -- Indexes for table `kos`
@@ -180,6 +233,13 @@ ALTER TABLE `nilai_alternatif`
   ADD KEY `id_kriteria` (`id_kriteria`);
 
 --
+-- Indexes for table `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -188,6 +248,12 @@ ALTER TABLE `nilai_alternatif`
 --
 ALTER TABLE `alternatif`
   MODIFY `id_alternatif` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT for table `gambar_interior`
+--
+ALTER TABLE `gambar_interior`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `kos`
@@ -208,8 +274,20 @@ ALTER TABLE `nilai_alternatif`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
+-- AUTO_INCREMENT for table `users`
+--
+ALTER TABLE `users`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `gambar_interior`
+--
+ALTER TABLE `gambar_interior`
+  ADD CONSTRAINT `gambar_interior_ibfk_1` FOREIGN KEY (`id_alternatif`) REFERENCES `alternatif` (`id_alternatif`);
 
 --
 -- Constraints for table `nilai_alternatif`
