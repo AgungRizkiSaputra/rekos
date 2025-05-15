@@ -18,6 +18,7 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,13 +30,16 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
         body {
             font-family: 'Poppins', sans-serif;
         }
+
         .playfair {
             font-family: 'Playfair Display', serif;
         }
+
         .kost-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
         }
+
         .top-badge {
             position: absolute;
             top: 0.5rem;
@@ -48,6 +52,7 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
             font-weight: bold;
             z-index: 10;
         }
+
         .loading-spinner {
             display: inline-block;
             width: 2rem;
@@ -57,11 +62,15 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
             border-top-color: #3b82f6;
             animation: spin 1s ease-in-out infinite;
         }
+
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
+
 <body class="bg-gray-50">
     <!-- Navbar -->
     <nav class="fixed top-0 w-full bg-white shadow-lg text-black z-20 py-4 px-6">
@@ -80,9 +89,9 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
         <div class="max-w-6xl mx-auto">
             <!-- Header -->
             <div class="text-center mb-12">
-            <h1 class="text-4xl font-extrabold text-gray-900 mb-4 text-center">
-                Hasil Rekomendasi Kost
-            </h1>
+                <h1 class="text-4xl font-extrabold text-gray-900 mb-4 text-center">
+                    Hasil Rekomendasi Kost
+                </h1>
                 <p class="text-gray-600 max-w-2xl mx-auto text-lg">
                     Berikut adalah rekomendasi kost terbaik untuk Anda berdasarkan perhitungan metode Weight Product (WP).
                 </p>
@@ -168,19 +177,43 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
             setTimeout(function() {
                 // Hide loading indicator
                 document.getElementById('loading').classList.add('hidden');
-                
+
                 // Get the results data from PHP
                 const results = <?= json_encode($hasil_rekomendasi) ?>;
-                
+
                 // Get criteria data
-                const criteria = [
-                    { name: 'Harga', weight: 0.3, type: 'cost', normalized: (0.3 / 1).toFixed(2) },
-                    { name: 'Jarak ke Kampus', weight: 0.25, type: 'cost', normalized: (0.25 / 1).toFixed(2) },
-                    { name: 'Fasilitas', weight: 0.2, type: 'benefit', normalized: (0.2 / 1).toFixed(2) },
-                    { name: 'Keamanan', weight: 0.15, type: 'benefit', normalized: (0.15 / 1).toFixed(2) },
-                    { name: 'Kebersihan', weight: 0.1, type: 'benefit', normalized: (0.1 / 1).toFixed(2) }
+                const criteria = [{
+                        name: 'Harga',
+                        weight: 0.3,
+                        type: 'cost',
+                        normalized: (0.3 / 1).toFixed(2)
+                    },
+                    {
+                        name: 'Jarak ke Kampus',
+                        weight: 0.25,
+                        type: 'cost',
+                        normalized: (0.25 / 1).toFixed(2)
+                    },
+                    {
+                        name: 'Fasilitas',
+                        weight: 0.2,
+                        type: 'benefit',
+                        normalized: (0.2 / 1).toFixed(2)
+                    },
+                    {
+                        name: 'Keamanan',
+                        weight: 0.15,
+                        type: 'benefit',
+                        normalized: (0.15 / 1).toFixed(2)
+                    },
+                    {
+                        name: 'Kebersihan',
+                        weight: 0.1,
+                        type: 'benefit',
+                        normalized: (0.1 / 1).toFixed(2)
+                    }
                 ];
-                
+
                 // Display criteria details
                 const criteriaTable = document.getElementById('criteria-details');
                 criteria.forEach(item => {
@@ -193,95 +226,103 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
                     `;
                     criteriaTable.appendChild(row);
                 });
-                
+
                 // Display results
                 displayResults(results);
-                
+
                 // Set up filter event listeners
                 setupFilters();
-                
+
             }, 1500); // Simulate 1.5s loading time
-            
+
             function displayResults(results) {
                 const container = document.getElementById('results-container');
                 const noResults = document.getElementById('no-results');
-                
+
                 // Clear previous results
                 container.innerHTML = '';
-                
+
                 if (results.length === 0) {
                     container.classList.add('hidden');
                     noResults.classList.remove('hidden');
                     return;
                 }
-                
+
                 noResults.classList.add('hidden');
-                
+
                 results.forEach((kost, index) => {
                     const card = document.createElement('div');
                     card.className = 'kost-card bg-white rounded-xl shadow-lg overflow-hidden transition duration-300 relative';
                     card.dataset.harga = kost.harga;
                     card.dataset.fasilitas = kost.deskripsi.toLowerCase().includes('fasilitas lengkap') ? '1' : '0';
                     card.dataset.jarak = index < 3 ? 'dekat' : 'jauh';
-                    
+
                     let badge = '';
                     if (index < 3) {
                         badge = `<div class="top-badge">Top ${index + 1}</div>`;
                     }
-                    
+
                     card.innerHTML = `
-                        ${badge}
-                        <img src="images/${kost.gambar}" alt="${kost.nama_alternatif}" class="w-full h-48 object-cover">
-                        <div class="p-5">
-                            <h2 class="text-xl font-semibold text-gray-800">${kost.nama_alternatif}</h2>
-                            <p class="text-gray-600 text-sm">Rp ${kost.harga.toLocaleString('id-ID')} / bulan</p>
-                            <p class="text-gray-500 text-sm mt-2">${kost.deskripsi}</p>
-                            <div class="mt-3 flex justify-between items-center">
-                                <span class="text-blue-600 font-medium">
-                                    Skor: ${kost.vektor.toFixed(4)}
-                                </span>
-                                <button class="text-blue-500 hover:text-blue-700 text-sm font-semibold detail-btn" data-id="${kost.id_alternatif}">
-                                    Detail >
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                    
+    ${badge}
+    <img
+        src="images/${kost.gambar}"
+        alt="${kost.nama_alternatif}"
+        class="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-105" />
+    <div class="flex flex-col flex-1 p-6">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors duration-200">
+            ${kost.nama_alternatif}
+        </h2>
+        <p class="text-gray-500 text-lg">Rp ${kost.harga.toLocaleString('id-ID')} / bulan</p>
+        <p class="text-gray-500 text-sm mt-4 line-clamp-3 flex-grow">
+            ${kost.deskripsi}
+        </p>
+        <div class="mt-auto pt-4 flex justify-between items-center">
+            <span class="text-blue-600 font-medium">
+                Skor: ${kost.vektor.toFixed(4)}
+            </span>
+            <span class="text-sm text-blue-500 font-semibold group-hover:underline">
+                Lihat detail
+            </span>
+        </div>
+    </div>
+`;
+
+
                     container.appendChild(card);
                 });
-                
+
                 container.classList.remove('hidden');
             }
-            
+
             function setupFilters() {
                 const filterMurah = document.getElementById('filter-murah');
                 const filterFasilitas = document.getElementById('filter-fasilitas');
                 const filterDekat = document.getElementById('filter-dekat');
                 const resetBtn = document.getElementById('reset-filter');
-                
+
                 function applyFilters() {
                     const results = <?= json_encode($hasil_rekomendasi) ?>;
                     let filteredResults = [...results];
-                    
+
                     if (filterMurah.checked) {
                         filteredResults = filteredResults.filter(kost => kost.harga <= 1500000);
                     }
-                    
+
                     if (filterFasilitas.checked) {
                         filteredResults = filteredResults.filter(kost => kost.deskripsi.toLowerCase().includes('fasilitas lengkap'));
                     }
-                    
+
                     if (filterDekat.checked) {
                         filteredResults = filteredResults.slice(0, 3); // Top 3 are considered "dekat"
                     }
-                    
+
                     displayResults(filteredResults);
                 }
-                
+
                 filterMurah.addEventListener('change', applyFilters);
                 filterFasilitas.addEventListener('change', applyFilters);
                 filterDekat.addEventListener('change', applyFilters);
-                
+
                 resetBtn.addEventListener('click', function() {
                     filterMurah.checked = false;
                     filterFasilitas.checked = false;
@@ -292,4 +333,5 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
         });
     </script>
 </body>
+
 </html>

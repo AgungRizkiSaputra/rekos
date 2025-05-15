@@ -6,12 +6,14 @@ require_once 'includes/functions.php';
 $id_kost = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 // Query untuk mendapatkan data kost
-$query = "SELECT * FROM alternatif WHERE id_alternatif = ?";
-$stmt = $conn->prepare($query);
-$stmt->bind_param("i", $id_kost);
-$stmt->execute();
-$result = $stmt->get_result();
-$kost = $result->fetch_assoc();
+// Query untuk mendapatkan data kost berdasarkan ID
+$query_kost = "SELECT * FROM alternatif WHERE id_alternatif = ?";
+$stmt_kost = $conn->prepare($query_kost);
+$stmt_kost->bind_param("i", $id_kost);
+$stmt_kost->execute();
+$result_kost = $stmt_kost->get_result();
+$kost = $result_kost->fetch_assoc();
+
 
 // Jika kost tidak ditemukan, redirect ke halaman rekomendasi
 // if (!$kost) {
@@ -54,7 +56,7 @@ $skor = 1.0;
 foreach ($nilai_kriteria as $nk) {
     if ($nk['jenis'] == 'cost') {
         // Untuk kriteria cost, gunakan 1/nilai
-        $skor *= pow(1/$nk['nilai'], $nk['bobot']);
+        $skor *= pow(1 / $nk['nilai'], $nk['bobot']);
     } else {
         // Untuk kriteria benefit, gunakan nilai langsung
         $skor *= pow($nk['nilai'], $nk['bobot']);
@@ -75,21 +77,25 @@ if (empty($nilai_kriteria)) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detail <?= htmlspecialchars($kost['nama_alternatif']) ?> - Rekos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="js/style.js">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Poppins', sans-serif;
             background-color: #f8fafc;
         }
+
         .playfair {
             font-family: 'Playfair Display', serif;
         }
+
         .badge-top {
             position: absolute;
             top: 1rem;
@@ -103,28 +109,30 @@ if (empty($nilai_kriteria)) {
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             z-index: 10;
         }
+
         .rating-star {
             color: #F59E0B;
         }
+
         .criteria-card {
             transition: all 0.3s ease;
         }
+
         .criteria-card:hover {
             transform: translateY(-3px);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
+
+        #carouselImage {
+            opacity: 1;
+            transition: opacity 0.5s ease-in-out;
+        }
     </style>
 </head>
+
 <body>
     <!-- Navbar -->
-    <nav class="fixed top-0 w-full bg-white shadow-md z-20 py-4 px-6">
-        <div class="container mx-auto flex items-center justify-between">
-            <a href="index.php" class="text-2xl font-bold italic text-blue-600">Rekos</a>
-            <a href="rekomendasi.php" class="text-blue-600 hover:text-blue-800 transition duration-300 flex items-center">
-                <i class="fas fa-arrow-left mr-2"></i> Kembali ke Rekomendasi
-            </a>
-        </div>
-    </nav>
+    <?php include 'includes/navbar.php'; ?>
 
     <!-- Main Content -->
     <div class="pt-24 pb-12 px-4 max-w-6xl mx-auto">
@@ -143,23 +151,23 @@ if (empty($nilai_kriteria)) {
                 <div class="bg-white rounded-xl shadow-md p-8 mb-8">
                     <h1 class="text-3xl font-bold text-gray-900 mb-2 playfair"><?= htmlspecialchars($kost['nama_alternatif']) ?></h1>
                     <p class="text-gray-600 mb-4 flex items-center">
-                        <i class="fas fa-map-marker-alt text-blue-500 mr-2"></i> 
+                        <i class="fas fa-map-marker-alt text-blue-500 mr-2"></i>
                         <?= htmlspecialchars($kost['alamat']) ?>
                     </p>
-                    
+
                     <div class="flex flex-wrap items-center justify-between mb-6">
                         <div>
                             <span class="text-2xl font-bold text-blue-600">Rp <?= number_format($kost['harga'], 0, ',', '.') ?></span>
                             <span class="text-gray-500">/ bulan</span>
                         </div>
-                        
+
                         <div class="flex items-center">
                             <div class="rating-star mr-2">
-                                <?php 
+                                <?php
                                 $rating = 4.5; // Anda bisa mengambil dari database jika ada
                                 $full_stars = floor($rating);
                                 $half_star = ($rating - $full_stars) >= 0.5;
-                                
+
                                 for ($i = 1; $i <= 5; $i++) {
                                     if ($i <= $full_stars) {
                                         echo '<i class="fas fa-star"></i>';
@@ -174,9 +182,9 @@ if (empty($nilai_kriteria)) {
                             <span class="text-gray-600"><?= $rating ?> (120 reviews)</span>
                         </div>
                     </div>
-                    
+
                     <p class="text-gray-700 mb-8 leading-relaxed"><?= htmlspecialchars($kost['deskripsi']) ?></p>
-                    
+
                     <div class="border-t border-gray-200 pt-6">
                         <h2 class="text-xl font-semibold text-gray-900 mb-4">Fasilitas Utama</h2>
                         <div class="grid grid-cols-2 gap-4">
@@ -207,21 +215,64 @@ if (empty($nilai_kriteria)) {
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Gallery Section -->
-                <div class="bg-white rounded-xl shadow-md p-8 mb-8">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-6">Galeri Foto</h2>
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <img src="images/<?= htmlspecialchars($kost['gambar']) ?>" alt="Kost <?= htmlspecialchars($kost['nama_alternatif']) ?>" class="rounded-lg h-40 object-cover">
-                        <img src="images/kost-interior1.jpg" alt="Interior 1" class="rounded-lg h-40 object-cover">
-                        <img src="images/kost-interior2.jpg" alt="Interior 2" class="rounded-lg h-40 object-cover">
-                        <img src="images/kost-kamar.jpg" alt="Kamar" class="rounded-lg h-40 object-cover">
-                        <img src="images/kost-kamar-mandi.jpg" alt="Kamar Mandi" class="rounded-lg h-40 object-cover">
-                        <img src="images/kost-ruang-tamu.jpg" alt="Ruang Tamu" class="rounded-lg h-40 object-cover">
+                <div class="bg-white rounded-xl shadow-xl p-8 mb-8 max-w-4xl mx-auto">
+                    <h2 class="text-2xl font-semibold text-gray-900 mb-6 text-center">Galeri Foto</h2>
+                    <div class="relative overflow-hidden rounded-lg h-80">
+                        <div id="carousel" class="absolute inset-0 flex items-center justify-center">
+                            <!-- Gambar akan muncul di sini -->
+                        </div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black opacity-30"></div>
                     </div>
                 </div>
+
+                <script>
+                    const images = [
+                        'images/galeri/fasilitas1.jpg',
+                        'images/galeri/fasilitas2.jpg',
+                        'images/galeri/fasilitas3.jpg',
+                        'images/galeri/dapur.jpg',
+                        'images/galeri/kamar.jpg',
+                    ];
+
+                    let currentIndex = 0;
+                    const carouselContainer = document.getElementById('carousel');
+
+                    function showNextImage() {
+                        const img = document.createElement('img');
+                        img.src = images[currentIndex];
+                        img.classList.add('w-full', 'h-full', 'object-cover', 'transition-opacity', 'duration-500');
+                        img.style.opacity = '0';
+
+                        // Hapus gambar lama jika ada
+                        if (carouselContainer.children.length > 0) {
+                            carouselContainer.removeChild(carouselContainer.children[0]);
+                        }
+
+                        // Tambahkan gambar baru ke carousel
+                        carouselContainer.appendChild(img);
+
+                        // Fade-in gambar baru
+                        setTimeout(() => {
+                            img.style.opacity = '1';
+                        }, 50);
+
+                        currentIndex = (currentIndex + 1) % images.length;
+                    }
+
+                    // Ganti gambar setiap 4 detik
+                    setInterval(showNextImage, 4000);
+
+                    // Inisialisasi gambar pertama
+                    showNextImage();
+                </script>
+
+
+
+
             </div>
-            
+
             <!-- Sidebar -->
             <div class="lg:col-span-1">
                 <!-- Skor WP -->
@@ -235,36 +286,47 @@ if (empty($nilai_kriteria)) {
                         Skor ini dihitung berdasarkan metode Weight Product dengan mempertimbangkan berbagai kriteria seperti harga, jarak, fasilitas, dan lainnya.
                     </p>
                 </div>
-                
+
                 <!-- Detail Kriteria -->
                 <div class="bg-white rounded-xl shadow-md p-6 mb-6">
                     <h2 class="text-xl font-semibold text-gray-900 mb-4">Detail Kriteria</h2>
                     <div class="space-y-4">
                         <?php foreach ($nilai_kriteria as $kriteria): ?>
-                        <div class="criteria-card bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <h3 class="font-semibold text-gray-800"><?= htmlspecialchars($kriteria['nama_kriteria']) ?></h3>
-                                    <p class="text-gray-600 text-sm mt-1">Nilai: <?= $kriteria['nilai'] ?></p>
+                            <div class="criteria-card bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="font-semibold text-gray-800"><?= htmlspecialchars($kriteria['nama_kriteria']) ?></h3>
+                                        <p class="text-gray-600 text-sm mt-1">Nilai: <?= $kriteria['nilai'] ?></p>
+                                    </div>
+                                    <span class="px-3 py-1 rounded-full text-xs font-medium 
+                    <?= $kriteria['jenis'] == 'benefit' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
+                                        <?= $kriteria['jenis'] == 'benefit' ? 'Benefit' : 'Cost' ?>
+                                    </span>
                                 </div>
-                                <span class="px-3 py-1 rounded-full text-xs font-medium 
-                                    <?= $kriteria['jenis'] == 'benefit' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
-                                    <?= $kriteria['jenis'] == 'benefit' ? 'Benefit' : 'Cost' ?>
-                                </span>
-                            </div>
-                            <div class="mt-2">
-                                <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="bg-blue-500 h-2 rounded-full" style="width: <?= ($kriteria['nilai']/5)*100 ?>%"></div>
+                                <div class="mt-2">
+                                    <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                                        <?php
+                                        $nilai = floatval($kriteria['nilai']);
+                                        $persentase = min(100, ($nilai / 5) * 100); // pastikan tidak lebih dari 100%
+                                        ?>
+                                        <div class="bg-blue-500 h-2 rounded-full" style="width: <?= $persentase ?>%"></div>
+                                    </div>
+                                    <p class="text-right text-xs text-gray-500 mt-1">Bobot: <?= $kriteria['bobot'] ?></p>
                                 </div>
-                                <p class="text-right text-xs text-gray-500 mt-1">Bobot: <?= $kriteria['bobot'] ?></p>
                             </div>
-                        </div>
                         <?php endforeach; ?>
                     </div>
                 </div>
-                
+
+
                 <!-- Contact Box -->
-                <div class="bg-white rounded-xl shadow-md p-6">
+                <!-- Tombol Gelembung (Chat) -->
+                <button onclick="toggleContact()" class="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition duration-300 z-50">
+                    <i class="fas fa-comments text-2xl"></i>
+                </button>
+
+                <!-- Kontainer Kontak -->
+                <div id="contactCard" class="hidden fixed bottom-24 right-6 bg-white rounded-xl shadow-md p-6 w-80 z-40">
                     <h2 class="text-xl font-semibold text-gray-900 mb-4">Hubungi Pemilik</h2>
                     <div class="space-y-4">
                         <div class="flex items-center">
@@ -299,6 +361,15 @@ if (empty($nilai_kriteria)) {
                         <i class="fas fa-comment-dots mr-2"></i> Kirim Pesan
                     </button>
                 </div>
+
+                <!-- Script Toggle -->
+                <script>
+                    function toggleContact() {
+                        const contactCard = document.getElementById('contactCard');
+                        contactCard.classList.toggle('hidden');
+                    }
+                </script>
+
             </div>
         </div>
     </div>
@@ -315,4 +386,5 @@ if (empty($nilai_kriteria)) {
         </div>
     </footer>
 </body>
+
 </html>

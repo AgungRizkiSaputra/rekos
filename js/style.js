@@ -11,18 +11,18 @@ document.getElementById("menu-button").addEventListener("click", function () {
 });
 
 // Smooth scrolling for anchor links
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-  anchor.addEventListener('click', function (e) {
+document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+  anchor.addEventListener("click", function (e) {
     e.preventDefault();
-    
-    const targetId = this.getAttribute('href');
-    if (targetId === '#') return;
-    
+
+    const targetId = this.getAttribute("href");
+    if (targetId === "#") return;
+
     const targetElement = document.querySelector(targetId);
     if (targetElement) {
       window.scrollTo({
         top: targetElement.offsetTop - 80,
-        behavior: 'smooth'
+        behavior: "smooth",
       });
     }
   });
@@ -40,7 +40,7 @@ menuButton.addEventListener("mouseleave", () => {
 });
 
 // Efek scroll navbar
-window.addEventListener("scroll", function() {
+window.addEventListener("scroll", function () {
   const navbar = document.getElementById("navbar");
   if (window.scrollY > 50) {
     navbar.classList.add("shadow-md", "py-3");
