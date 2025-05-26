@@ -1,38 +1,39 @@
 <?php
+// detail_kost.php
+// Gabungkan Data Kost + Gallery Interior
 require_once 'includes/config.php';
 require_once 'includes/functions.php';
 
-// Ambil ID kost dari parameter URL
+// Ambil ID kost (id_alternatif)
 $id_kost = isset($_GET['id']) ? intval($_GET['id']) : 0;
+if ($id_kost <= 0) {
+    header("Location: rekomendasi.php");
+    exit;
+}
 
-// Query untuk mendapatkan data kost
-// Query untuk mendapatkan data kost berdasarkan ID
+// ------ Query: Data utama kost ------
 $query_kost = "SELECT * FROM alternatif WHERE id_alternatif = ?";
 $stmt_kost = $conn->prepare($query_kost);
 $stmt_kost->bind_param("i", $id_kost);
 $stmt_kost->execute();
-$result_kost = $stmt_kost->get_result();
-$kost = $result_kost->fetch_assoc();
+$kost = $stmt_kost->get_result()->fetch_assoc();
+$stmt_kost->close();
+if (!$kost) {
+    die("Data kost tidak ditemukan untuk ID: " . $id_kost);
+}
 
-
-// Jika kost tidak ditemukan, redirect ke halaman rekomendasi
-// if (!$kost) {
-//     header("Location: rekomendasi.php");
-//     exit();
-// }
-
-// Query untuk mendapatkan ranking kost
-$query_ranking = "SELECT a.id_alternatif, 
-                 SUM(k.bobot * IF(k.jenis = 'cost', 1/n.nilai, n.nilai)) AS skor
-                 FROM alternatif a
-                 JOIN nilai_alternatif n ON a.id_alternatif = n.id_alternatif
-                 JOIN kriteria k ON n.id_kriteria = k.id_kriteria
-                 GROUP BY a.id_alternatif
-                 ORDER BY skor DESC";
+// ------ Query: Ranking WP ------
+$query_ranking = "
+    SELECT a.id_alternatif,
+           SUM(k.bobot * IF(k.jenis = 'cost', 1/n.nilai, n.nilai)) AS skor
+    FROM alternatif a
+    JOIN nilai_alternatif n ON a.id_alternatif = n.id_alternatif
+    JOIN kriteria k ON n.id_kriteria = k.id_kriteria
+    GROUP BY a.id_alternatif
+    ORDER BY skor DESC
+";
 $ranking_result = $conn->query($query_ranking);
 $ranking_data = $ranking_result->fetch_all(MYSQLI_ASSOC);
-
-// Cari ranking kost ini
 $ranking = 0;
 foreach ($ranking_data as $index => $row) {
     if ($row['id_alternatif'] == $id_kost) {
@@ -41,38 +42,48 @@ foreach ($ranking_data as $index => $row) {
     }
 }
 
-// Query untuk mendapatkan nilai kriteria kost
-$query_nilai = "SELECT k.nama_kriteria, n.nilai, k.jenis, k.bobot
-                FROM nilai_alternatif n
-                JOIN kriteria k ON n.id_kriteria = k.id_kriteria
-                WHERE n.id_alternatif = ?";
+// ------ Query: Nilai Kriteria ------
+$query_nilai = "
+    SELECT k.nama_kriteria, n.nilai, k.jenis, k.bobot
+    FROM nilai_alternatif n
+    JOIN kriteria k ON n.id_kriteria = k.id_kriteria
+    WHERE n.id_alternatif = ?
+";
 $stmt_nilai = $conn->prepare($query_nilai);
 $stmt_nilai->bind_param("i", $id_kost);
 $stmt_nilai->execute();
 $nilai_kriteria = $stmt_nilai->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt_nilai->close();
+if (empty($nilai_kriteria)) {
+    die("Data kriteria tidak ditemukan untuk kost ini");
+}
 
-// Hitung skor WP
+// ------ Hitung skor WP akhir ------
 $skor = 1.0;
 foreach ($nilai_kriteria as $nk) {
-    if ($nk['jenis'] == 'cost') {
-        // Untuk kriteria cost, gunakan 1/nilai
+    if ($nk['jenis'] === 'cost') {
         $skor *= pow(1 / $nk['nilai'], $nk['bobot']);
     } else {
-        // Untuk kriteria benefit, gunakan nilai langsung
         $skor *= pow($nk['nilai'], $nk['bobot']);
     }
 }
 $skor = round($skor, 4);
 
-// Jika kost tidak ditemukan, tampilkan pesan error dan stop eksekusi
-if (!$kost) {
-    die("Data kost tidak ditemukan untuk ID: " . $id_kost);
+// ------ Query: Gallery Interior ------
+// $mysqli = new mysqli($host, $user, $pass, $db);
+// if ($mysqli->connect_errno) {
+//     die("Gagal koneksi ke MySQL (gallery): " . $mysqli->connect_error);
+// }
+$stmt_img = $conn->prepare("SELECT nama_file FROM gambar_interior WHERE id_alternatif = ?");
+$stmt_img->bind_param('i', $id_kost);
+$stmt_img->execute();
+$result_img = $stmt_img->get_result();
+$images = [];
+while ($row = $result_img->fetch_assoc()) {
+    $images[] = 'uploads/' . $row['nama_file'];
 }
-
-// Pastikan nilai kriteria ada
-if (empty($nilai_kriteria)) {
-    die("Data kriteria tidak ditemukan untuk kost ini");
-}
+$stmt_img->close();
+$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -86,6 +97,9 @@ if (empty($nilai_kriteria)) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="js/style.js">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -218,58 +232,106 @@ if (empty($nilai_kriteria)) {
 
                 <!-- Gallery Section -->
                 <div class="bg-white rounded-xl shadow-xl p-8 mb-8 max-w-4xl mx-auto">
-                    <h2 class="text-2xl font-semibold text-gray-900 mb-6 text-center">Galeri Foto</h2>
-                    <div class="relative overflow-hidden rounded-lg h-80">
-                        <div id="carousel" class="absolute inset-0 flex items-center justify-center">
-                            <!-- Gambar akan muncul di sini -->
-                        </div>
-                        <div class="absolute inset-0 bg-gradient-to-t from-black opacity-30"></div>
+                <h2 class="text-2xl font-semibold text-gray-900 mb-6 text-center">Galeri Foto</h2>
+                <div class="relative overflow-hidden rounded-lg h-80">
+                    <!-- Carousel Container -->
+                    <div id="carousel" class="absolute inset-0 flex items-center justify-center"></div>
+                    <!-- Gradient Overlay -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-black opacity-30 pointer-events-none"></div>
+
+                    <!-- Prev Button: z-0 agar di bawah navbar -->
+                    <button id="prevBtn"
+                    class="absolute left-2 top-1/2 transform -translate-y-1/2 
+                            bg-gray-300 text-gray-800 p-3 rounded-full 
+                            transition-transform duration-200 ease-in-out hover:scale-110 hover:shadow-lg
+                            z-0">
+                    ‹
+                    </button>
+
+                    <!-- Next Button: z-0 agar di bawah navbar -->
+                    <button id="nextBtn"
+                    class="absolute right-2 top-1/2 transform -translate-y-1/2 
+                            bg-gray-300 text-gray-800 p-3 rounded-full 
+                            transition-transform duration-200 ease-in-out hover:scale-110 hover:shadow-lg
+                            z-0">
+                    ›
+                    </button>
+
+                    <!-- Lightbox Modal -->
+                    <div id="lightbox"
+                        class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+                    <div class="relative">
+                        <!-- Tombol Close dengan icon dan z-index tinggi -->
+                        <button onclick="closeLightbox()"
+                                class="absolute top-4 right-4 text-white text-3xl p-2 rounded-full
+                                    hover:bg-white hover:bg-opacity-20 transition z-50">
+                        <i class="fas fa-times"></i>
+                        </button>
+                        <img id="lightbox-img"
+                            class="max-h-full max-w-full rounded-lg shadow-lg z-40" />
                     </div>
+                    </div>
+                    
+                    <!-- Dots Indicator -->
+                    <div id="dots" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-20"></div>
+                </div>
                 </div>
 
                 <script>
-                    const images = [
-                        'images/galeri/fasilitas1.jpg',
-                        'images/galeri/fasilitas2.jpg',
-                        'images/galeri/fasilitas3.jpg',
-                        'images/galeri/dapur.jpg',
-                        'images/galeri/kamar.jpg',
-                    ];
+const images = <?= json_encode($images) ?>;
+let currentIndex = 0, timerId = null;
+const carousel = document.getElementById('carousel');
+const dotsContainer = document.getElementById('dots');
 
-                    let currentIndex = 0;
-                    const carouselContainer = document.getElementById('carousel');
+images.forEach((_, idx) => {
+  const dot = document.createElement('div');
+  dot.className = 'w-2 h-2 rounded-full bg-gray-400 cursor-pointer';
+  dot.dataset.index = idx;
+  dot.addEventListener('click', () => { showImage(idx); resetAutoRotate(); });
+  dotsContainer.appendChild(dot);
+});
 
-                    function showNextImage() {
-                        const img = document.createElement('img');
-                        img.src = images[currentIndex];
-                        img.classList.add('w-full', 'h-full', 'object-cover', 'transition-opacity', 'duration-500');
-                        img.style.opacity = '0';
+function updateDots() {
+  Array.from(dotsContainer.children).forEach((dot, idx) => {
+    dot.classList.toggle('bg-white', idx === currentIndex);
+    dot.classList.toggle('bg-gray-400', idx !== currentIndex);
+  });
+}
 
-                        // Hapus gambar lama jika ada
-                        if (carouselContainer.children.length > 0) {
-                            carouselContainer.removeChild(carouselContainer.children[0]);
-                        }
+function showImage(index) {
+  if (!images.length) return;
+  index = (index + images.length) % images.length;
+  currentIndex = index;
+  const img = document.createElement('img');
+  img.src = images[currentIndex];
+  img.alt = `Galeri ${currentIndex+1}`;
+  img.className = 'w-full h-full object-cover transition-opacity duration-500 cursor-pointer';
+  img.style.opacity = '0';
+  img.addEventListener('click', () => openLightbox(img.src));
+  carousel.replaceChildren(img);
+  setTimeout(() => img.style.opacity = '1', 50);
+  updateDots();
+}
 
-                        // Tambahkan gambar baru ke carousel
-                        carouselContainer.appendChild(img);
+function showNextImage() { showImage(currentIndex+1); }
+function showPrevImage() { showImage(currentIndex-1); }
 
-                        // Fade-in gambar baru
-                        setTimeout(() => {
-                            img.style.opacity = '1';
-                        }, 50);
+prevBtn.addEventListener('click', () => { showPrevImage(); resetAutoRotate(); });
+nextBtn.addEventListener('click', () => { showNextImage(); resetAutoRotate(); });
 
-                        currentIndex = (currentIndex + 1) % images.length;
-                    }
+function startAutoRotate() { clearInterval(timerId); timerId = setInterval(showNextImage, 4000); }
+function resetAutoRotate() { clearInterval(timerId); startAutoRotate(); }
 
-                    // Ganti gambar setiap 4 detik
-                    setInterval(showNextImage, 4000);
+document.addEventListener('DOMContentLoaded', () => {
+  showImage(0);
+  startAutoRotate();
+  const existingLb = document.getElementById('lightbox');
+  if (existingLb) existingLb.addEventListener('click', e => { if (e.target.id==='lightbox') closeLightbox(); });
+});
 
-                    // Inisialisasi gambar pertama
-                    showNextImage();
-                </script>
-
-
-
+function openLightbox(src) { const lb = document.getElementById('lightbox'); document.getElementById('lightbox-img').src = src; lb.classList.remove('hidden'); }
+function closeLightbox() { document.getElementById('lightbox').classList.add('hidden'); }
+</script>
 
             </div>
 

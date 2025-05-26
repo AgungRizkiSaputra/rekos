@@ -263,29 +263,31 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
                     }
 
                     card.innerHTML = `
-    ${badge}
-    <img
-        src="images/${kost.gambar}"
-        alt="${kost.nama_alternatif}"
-        class="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-105" />
-    <div class="flex flex-col flex-1 p-6">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors duration-200">
-            ${kost.nama_alternatif}
-        </h2>
-        <p class="text-gray-500 text-lg">Rp ${kost.harga.toLocaleString('id-ID')} / bulan</p>
-        <p class="text-gray-500 text-sm mt-4 line-clamp-3 flex-grow">
-            ${kost.deskripsi}
-        </p>
-        <div class="mt-auto pt-4 flex justify-between items-center">
-            <span class="text-blue-600 font-medium">
-                Skor: ${kost.vektor.toFixed(4)}
-            </span>
-            <span class="text-sm text-blue-500 font-semibold group-hover:underline">
-                Lihat detail
-            </span>
-        </div>
-    </div>
-`;
+                    ${badge}
+                    <a href="detail.php?id=${kost.id_alternatif}" class="block h-full">
+                        <img
+                            src="images/${kost.gambar}"
+                            alt="${kost.nama_alternatif}"
+                            class="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-105" />
+                        <div class="flex flex-col flex-1 p-6">
+                            <h2 class="text-2xl font-semibold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors duration-200">
+                                ${kost.nama_alternatif}
+                            </h2>
+                            <p class="text-gray-500 text-lg">Rp ${kost.harga.toLocaleString('id-ID')} / bulan</p>
+                            <p class="text-gray-500 text-sm mt-4 line-clamp-3 flex-grow">
+                                ${kost.deskripsi}
+                            </p>
+                            <div class="mt-auto pt-4 flex justify-between items-center">
+                                <span class="text-blue-600 font-medium">
+                                    Skor: ${kost.vektor.toFixed(4)}
+                                </span>
+                                <span class="text-sm text-blue-500 font-semibold group-hover:underline">
+                                    Lihat detail
+                                </span>
+                            </div>
+                        </div>
+                    </a>
+                `;
 
 
                     container.appendChild(card);

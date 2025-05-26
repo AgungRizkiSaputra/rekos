@@ -138,42 +138,41 @@ $hasil_rekomendasi = hitungWP();
     <!-- Kost Recommendations -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-8">
         <?php foreach ($hasil_rekomendasi as $index => $kost): ?>
-            <?php if ($isLoggedIn): ?>
-                <a href="detail.php?id=<?= $kost['id_alternatif'] ?>" class="group block h-full">
-                <?php else: ?>
-                    <a href="login.php" onclick="alert('Silakan login terlebih dahulu untuk melihat detail kost.')" class="group block h-full">
-                    <?php endif; ?>
-
-                    <div class="flex flex-col bg-white rounded-2xl shadow-xl overflow-hidden transform hover:scale-105 transition duration-300 relative h-full">
-                        <?php if ($index < 3): ?>
-                            <div class="absolute top-4 left-4 bg-yellow-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg z-10">
-                                Top <?= $index + 1 ?>
-                            </div>
-                        <?php endif; ?>
-                        <img
-                            src="images/<?= htmlspecialchars($kost['gambar']) ?>"
-                            alt="<?= htmlspecialchars($kost['nama_alternatif']) ?>"
-                            class="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-105" />
-                        <div class="flex flex-col flex-1 p-6">
-                            <h2 class="text-2xl font-semibold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors duration-200">
-                                <?= htmlspecialchars($kost['nama_alternatif']) ?>
-                            </h2>
-                            <p class="text-gray-500 text-lg">Rp <?= number_format($kost['harga'], 0, ',', '.') ?> / bulan</p>
-                            <p class="text-gray-500 text-sm mt-4 line-clamp-3 flex-grow">
-                                <?= htmlspecialchars($kost['deskripsi']) ?>
-                            </p>
-                            <div class="mt-auto pt-4 flex justify-between items-center">
-                                <span class="text-blue-600 font-medium">
-                                    Skor: <?= number_format($kost['vektor'], 4) ?>
-                                </span>
-                                <span class="text-sm text-blue-500 font-semibold group-hover:underline">
-                                    Lihat detail
-                                </span>
-                            </div>
-                        </div>
+        <?php if ($isLoggedIn): ?>
+            <a href="detail.php?id=<?= $kost['id_alternatif'] ?>" class="group block h-full">
+        <?php else: ?>
+            <a href="login.php" onclick="alert('Silakan login terlebih dahulu untuk melihat detail kost.')" class="group block h-full">
+        <?php endif; ?>
+            <div class="flex flex-col bg-white rounded-2xl shadow-xl overflow-hidden transform hover:scale-105 transition duration-300 relative h-full">
+                <?php if ($index < 3): ?>
+                    <div class="absolute top-4 left-4 bg-yellow-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg z-10">
+                        Top <?= $index + 1 ?>
                     </div>
-                    </a>
-                <?php endforeach; ?>
+                <?php endif; ?>
+                <img
+                    src="images/<?= htmlspecialchars($kost['gambar']) ?>"
+                    alt="<?= htmlspecialchars($kost['nama_alternatif']) ?>"
+                    class="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-105" />
+                <div class="flex flex-col flex-1 p-6">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors duration-200">
+                        <?= htmlspecialchars($kost['nama_alternatif']) ?>
+                    </h2>
+                    <p class="text-gray-500 text-lg">Rp <?= number_format($kost['harga'], 0, ',', '.') ?> / bulan</p>
+                    <p class="text-gray-500 text-sm mt-4 line-clamp-3 flex-grow">
+                        <?= htmlspecialchars($kost['deskripsi']) ?>
+                    </p>
+                    <div class="mt-auto pt-4 flex justify-between items-center">
+                        <span class="text-blue-600 font-medium">
+                            Skor: <?= number_format($kost['vektor'], 4) ?>
+                        </span>
+                        <span class="text-sm text-blue-500 font-semibold group-hover:underline">
+                            Lihat detail
+                        </span>
+                    </div>
+                </div>
+            </div>
+            </a>
+        <?php endforeach; ?>
     </div>
 
     <br>
