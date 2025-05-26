@@ -25,7 +25,7 @@ if (!$kost) {
 // ------ Query: Ranking WP ------
 $query_ranking = "
     SELECT a.id_alternatif,
-           SUM(k.bobot * IF(k.jenis = 'cost', 1/n.nilai, n.nilai)) AS skor
+            SUM(k.bobot * IF(k.jenis = 'cost', 1/n.nilai, n.nilai)) AS skor
     FROM alternatif a
     JOIN nilai_alternatif n ON a.id_alternatif = n.id_alternatif
     JOIN kriteria k ON n.id_kriteria = k.id_kriteria
@@ -69,25 +69,31 @@ foreach ($nilai_kriteria as $nk) {
 }
 $skor = round($skor, 4);
 
-// ------ Query: Gallery Interior ------
-// $mysqli = new mysqli($host, $user, $pass, $db);
-// if ($mysqli->connect_errno) {
-//     die("Gagal koneksi ke MySQL (gallery): " . $mysqli->connect_error);
-// }
+// Query untuk mengambil gambar interior
 $stmt_img = $conn->prepare("SELECT nama_file FROM gambar_interior WHERE id_alternatif = ?");
 $stmt_img->bind_param('i', $id_kost);
 $stmt_img->execute();
 $result_img = $stmt_img->get_result();
 $images = [];
+
 while ($row = $result_img->fetch_assoc()) {
-    $images[] = 'uploads/' . $row['nama_file'];
+    // Gunakan path langsung dari database
+    $image_path = $row['nama_file'];
+
+    // Cek jika file ada di server
+    if (file_exists($image_path)) {
+        $images[] = $image_path;
+    } else {
+        error_log("Gambar tidak ditemukan: " . $image_path);
+        // Optional: tampilkan gambar placeholder jika gambar tidak ada
+        // $images[] = 'images/placeholder.jpg';
+    }
 }
 $stmt_img->close();
-$conn->close();
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 
 <head>
     <meta charset="UTF-8">
@@ -97,8 +103,7 @@ $conn->close();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="js/style.js">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
     <style>
         body {
@@ -141,26 +146,26 @@ $conn->close();
             opacity: 1;
             transition: opacity 0.5s ease-in-out;
         }
+
+        .carousel-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.5s ease-in-out;
+            cursor: pointer;
+        }
     </style>
 </head>
 
 <body>
-    <!-- Navbar -->
     <?php include 'includes/navbar.php'; ?>
 
-    <!-- Main Content -->
     <div class="pt-24 pb-12 px-4 max-w-6xl mx-auto">
-        <!-- Header Section -->
         <div class="relative mb-8 rounded-xl overflow-hidden shadow-lg">
-            <!-- <div class="badge-top">
-                Top <?= $ranking ?>
-            </div> -->
             <img src="images/<?= htmlspecialchars($kost['gambar']) ?>" alt="<?= htmlspecialchars($kost['nama_alternatif']) ?>" class="w-full h-96 object-cover">
         </div>
 
-        <!-- Kost Info Section -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Main Info -->
             <div class="lg:col-span-2">
                 <div class="bg-white rounded-xl shadow-md p-8 mb-8">
                     <h1 class="text-3xl font-bold text-gray-900 mb-2 playfair"><?= htmlspecialchars($kost['nama_alternatif']) ?></h1>
@@ -193,7 +198,7 @@ $conn->close();
                                 }
                                 ?>
                             </div>
-                            <span class="text-gray-600"><?= $rating ?> (120 reviews)</span>
+                            <span class="text-gray-600"><?= $rating ?> (120 ulasan)</span>
                         </div>
                     </div>
 
@@ -230,126 +235,252 @@ $conn->close();
                     </div>
                 </div>
 
-                <!-- Gallery Section -->
                 <div class="bg-white rounded-xl shadow-xl p-8 mb-8 max-w-4xl mx-auto">
-                <h2 class="text-2xl font-semibold text-gray-900 mb-6 text-center">Galeri Foto</h2>
-                <div class="relative overflow-hidden rounded-lg h-80">
-                    <!-- Carousel Container -->
-                    <div id="carousel" class="absolute inset-0 flex items-center justify-center"></div>
-                    <!-- Gradient Overlay -->
-                    <div class="absolute inset-0 bg-gradient-to-t from-black opacity-30 pointer-events-none"></div>
+                    <h2 class="text-2xl font-semibold text-gray-900 mb-6 text-center">Galeri Foto Interior</h2>
+                    <div class="relative overflow-hidden rounded-lg h-80 bg-gray-100">
+                        <!-- Carousel Container -->
+                        <div id="carousel" class="h-full w-full relative">
+                            <?php foreach ($images as $index => $image): ?>
+                                <img src="<?= htmlspecialchars($image) ?>"
+                                    alt="Interior Kost <?= $index + 1 ?>"
+                                    class="carousel-image absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-500 <?= $index === 0 ? 'opacity-100' : 'opacity-0' ?>"
+                                    data-index="<?= $index ?>"
+                                    onclick="openLightbox('<?= htmlspecialchars($image) ?>')">
+                            <?php endforeach; ?>
 
-                    <!-- Prev Button: z-0 agar di bawah navbar -->
-                    <button id="prevBtn"
-                    class="absolute left-2 top-1/2 transform -translate-y-1/2 
-                            bg-gray-300 text-gray-800 p-3 rounded-full 
-                            transition-transform duration-200 ease-in-out hover:scale-110 hover:shadow-lg
-                            z-0">
-                    ‹
-                    </button>
+                            <?php if (empty($images)): ?>
+                                <div class="flex items-center justify-center h-full">
+                                    <p class="text-gray-500">Belum ada foto interior untuk kost ini</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
 
-                    <!-- Next Button: z-0 agar di bawah navbar -->
-                    <button id="nextBtn"
-                    class="absolute right-2 top-1/2 transform -translate-y-1/2 
-                            bg-gray-300 text-gray-800 p-3 rounded-full 
-                            transition-transform duration-200 ease-in-out hover:scale-110 hover:shadow-lg
-                            z-0">
-                    ›
-                    </button>
+                        <!-- Navigation Buttons -->
+                        <?php if (!empty($images) && count($images) > 1): ?>
+                            <button id="prevBtn" class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 text-gray-800 p-3 rounded-full shadow-md hover:bg-white transition z-10">
+                                ‹
+                            </button>
+                            <button id="nextBtn" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 text-gray-800 p-3 rounded-full shadow-md hover:bg-white transition z-10">
+                                ›
+                            </button>
 
-                    <!-- Lightbox Modal -->
-                    <div id="lightbox"
-                        class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
-                    <div class="relative">
-                        <!-- Tombol Close dengan icon dan z-index tinggi -->
+                            <!-- Dots Indicator -->
+                            <div id="dots" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10"></div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Lightbox -->
+                <div id="lightbox" class="fixed inset-0 bg-black/90 z-50 hidden items-center justify-center p-4">
+                    <div class="relative max-w-4xl w-full">
+                        <button onclick="closeLightbox()" class="absolute top-4 right-4 text-white text-2xl z-50">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <img id="lightbox-img" class="max-h-[90vh] max-w-full mx-auto rounded-lg">
+                    </div>
+                </div>
+
+                <div id="lightbox"
+                    class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+                    <div class="relative max-w-4xl w-full">
                         <button onclick="closeLightbox()"
-                                class="absolute top-4 right-4 text-white text-3xl p-2 rounded-full
-                                    hover:bg-white hover:bg-opacity-20 transition z-50">
-                        <i class="fas fa-times"></i>
+                            class="absolute top-4 right-4 text-white text-3xl p-2 rounded-full
+                                hover:bg-white hover:bg-opacity-20 transition z-50">
+                            <i class="fas fa-times"></i>
                         </button>
                         <img id="lightbox-img"
-                            class="max-h-full max-w-full rounded-lg shadow-lg z-40" />
+                            class="max-h-[90vh] max-w-full rounded-lg shadow-lg z-40 mx-auto" />
                     </div>
-                    </div>
-                    
-                    <!-- Dots Indicator -->
-                    <div id="dots" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-20"></div>
-                </div>
                 </div>
 
                 <script>
-const images = <?= json_encode($images) ?>;
-let currentIndex = 0, timerId = null;
-const carousel = document.getElementById('carousel');
-const dotsContainer = document.getElementById('dots');
+                    document.addEventListener('DOMContentLoaded', function() {
+                        // Initialize variables
+                        const images = <?= json_encode($images) ?>;
+                        let currentIndex = 0;
+                        let timerId = null;
+                        const carousel = document.getElementById('carousel');
+                        const dotsContainer = document.getElementById('dots');
+                        const prevBtn = document.getElementById('prevBtn');
+                        const nextBtn = document.getElementById('nextBtn');
+                        const lightbox = document.getElementById('lightbox');
+                        const lightboxImg = document.getElementById('lightbox-img');
 
-images.forEach((_, idx) => {
-  const dot = document.createElement('div');
-  dot.className = 'w-2 h-2 rounded-full bg-gray-400 cursor-pointer';
-  dot.dataset.index = idx;
-  dot.addEventListener('click', () => { showImage(idx); resetAutoRotate(); });
-  dotsContainer.appendChild(dot);
-});
+                        // Function to update dot indicators
+                        function updateDots() {
+                            if (!dotsContainer || !images.length) return;
 
-function updateDots() {
-  Array.from(dotsContainer.children).forEach((dot, idx) => {
-    dot.classList.toggle('bg-white', idx === currentIndex);
-    dot.classList.toggle('bg-gray-400', idx !== currentIndex);
-  });
-}
+                            dotsContainer.innerHTML = '';
+                            images.forEach((_, idx) => {
+                                const dot = document.createElement('div');
+                                dot.className = `w-3 h-3 rounded-full cursor-pointer transition-colors ${idx === currentIndex ? 'bg-white' : 'bg-white/50'}`;
+                                dot.dataset.index = idx;
+                                dot.addEventListener('click', () => {
+                                    showImage(idx);
+                                    resetAutoRotate();
+                                });
+                                dotsContainer.appendChild(dot);
+                            });
+                        }
 
-function showImage(index) {
-  if (!images.length) return;
-  index = (index + images.length) % images.length;
-  currentIndex = index;
-  const img = document.createElement('img');
-  img.src = images[currentIndex];
-  img.alt = `Galeri ${currentIndex+1}`;
-  img.className = 'w-full h-full object-cover transition-opacity duration-500 cursor-pointer';
-  img.style.opacity = '0';
-  img.addEventListener('click', () => openLightbox(img.src));
-  carousel.replaceChildren(img);
-  setTimeout(() => img.style.opacity = '1', 50);
-  updateDots();
-}
+                        // Function to show specific image
+                        function showImage(index) {
+                            if (!images.length) return;
 
-function showNextImage() { showImage(currentIndex+1); }
-function showPrevImage() { showImage(currentIndex-1); }
+                            // Validate and normalize index
+                            currentIndex = (index + images.length) % images.length;
+                            const carouselImages = document.querySelectorAll('.carousel-image');
 
-prevBtn.addEventListener('click', () => { showPrevImage(); resetAutoRotate(); });
-nextBtn.addEventListener('click', () => { showNextImage(); resetAutoRotate(); });
+                            // Hide all images
+                            carouselImages.forEach(img => {
+                                img.classList.remove('opacity-100');
+                                img.classList.add('opacity-0');
+                            });
 
-function startAutoRotate() { clearInterval(timerId); timerId = setInterval(showNextImage, 4000); }
-function resetAutoRotate() { clearInterval(timerId); startAutoRotate(); }
+                            // Show current image
+                            const currentImage = document.querySelector(`.carousel-image[data-index="${currentIndex}"]`);
+                            if (currentImage) {
+                                currentImage.classList.remove('opacity-0');
+                                currentImage.classList.add('opacity-100');
+                            }
 
-document.addEventListener('DOMContentLoaded', () => {
-  showImage(0);
-  startAutoRotate();
-  const existingLb = document.getElementById('lightbox');
-  if (existingLb) existingLb.addEventListener('click', e => { if (e.target.id==='lightbox') closeLightbox(); });
-});
+                            updateDots();
+                        }
 
-function openLightbox(src) { const lb = document.getElementById('lightbox'); document.getElementById('lightbox-img').src = src; lb.classList.remove('hidden'); }
-function closeLightbox() { document.getElementById('lightbox').classList.add('hidden'); }
-</script>
+                        // Navigation functions
+                        function showNextImage() {
+                            showImage(currentIndex + 1);
+                        }
+
+                        function showPrevImage() {
+                            showImage(currentIndex - 1);
+                        }
+
+                        // Auto-rotation control
+                        function startAutoRotate() {
+                            clearInterval(timerId);
+                            if (images.length > 1) {
+                                timerId = setInterval(showNextImage, 5000);
+                            }
+                        }
+
+                        function resetAutoRotate() {
+                            clearInterval(timerId);
+                            startAutoRotate();
+                        }
+
+                        // Lightbox functions
+                        function openLightbox(src) {
+                            if (lightbox && lightboxImg) {
+                                lightboxImg.src = src;
+                                lightbox.classList.remove('hidden');
+                                document.body.style.overflow = 'hidden';
+                            }
+                        }
+
+                        function closeLightbox() {
+                            if (lightbox) {
+                                lightbox.classList.add('hidden');
+                                document.body.style.overflow = '';
+                            }
+                        }
+
+                        // Initialize event listeners
+                        if (prevBtn && nextBtn) {
+                            prevBtn.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                showPrevImage();
+                                resetAutoRotate();
+                            });
+
+                            nextBtn.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                showNextImage();
+                                resetAutoRotate();
+                            });
+                        }
+
+                        if (lightbox) {
+                            lightbox.addEventListener('click', function(e) {
+                                if (e.target === this || e.target.classList.contains('fa-times')) {
+                                    closeLightbox();
+                                }
+                            });
+                        }
+
+                        // Keyboard navigation
+                        document.addEventListener('keydown', function(e) {
+                            if (!lightbox.classList.contains('hidden')) {
+                                if (e.key === 'Escape') {
+                                    closeLightbox();
+                                }
+                                return;
+                            }
+
+                            switch (e.key) {
+                                case 'ArrowLeft':
+                                    showPrevImage();
+                                    resetAutoRotate();
+                                    break;
+                                case 'ArrowRight':
+                                    showNextImage();
+                                    resetAutoRotate();
+                                    break;
+                            }
+                        });
+
+                        // Initial setup
+                        if (images.length > 0) {
+                            showImage(0);
+                            startAutoRotate();
+                        }
+
+                        // Touch events for mobile swipe
+                        let touchStartX = 0;
+                        let touchEndX = 0;
+
+                        if (carousel) {
+                            carousel.addEventListener('touchstart', (e) => {
+                                touchStartX = e.changedTouches[0].screenX;
+                            }, {
+                                passive: true
+                            });
+
+                            carousel.addEventListener('touchend', (e) => {
+                                touchEndX = e.changedTouches[0].screenX;
+                                handleSwipe();
+                            }, {
+                                passive: true
+                            });
+                        }
+
+                        function handleSwipe() {
+                            if (touchEndX < touchStartX - 50) {
+                                // Swipe left
+                                showNextImage();
+                            } else if (touchEndX > touchStartX + 50) {
+                                // Swipe right
+                                showPrevImage();
+                            }
+                            resetAutoRotate();
+                        }
+                    });
+                </script>
 
             </div>
 
-            <!-- Sidebar -->
             <div class="lg:col-span-1">
-                <!-- Skor WP -->
                 <div class="bg-white rounded-xl shadow-md p-6 mb-6">
                     <h2 class="text-xl font-semibold text-gray-900 mb-4">Skor Rekomendasi</h2>
                     <div class="bg-blue-50 rounded-lg p-4 text-center">
                         <div class="text-4xl font-bold text-blue-600 mb-2"><?= $skor ?></div>
-                        <p class="text-gray-600">Weight Product Score</p>
+                        <p class="text-gray-600">Skor Weight Product</p>
                     </div>
                     <p class="text-gray-600 mt-4 text-sm">
                         Skor ini dihitung berdasarkan metode Weight Product dengan mempertimbangkan berbagai kriteria seperti harga, jarak, fasilitas, dan lainnya.
                     </p>
                 </div>
 
-                <!-- Detail Kriteria -->
                 <div class="bg-white rounded-xl shadow-md p-6 mb-6">
                     <h2 class="text-xl font-semibold text-gray-900 mb-4">Detail Kriteria</h2>
                     <div class="space-y-4">
@@ -380,14 +511,10 @@ function closeLightbox() { document.getElementById('lightbox').classList.add('hi
                     </div>
                 </div>
 
-
-                <!-- Contact Box -->
-                <!-- Tombol Gelembung (Chat) -->
                 <button onclick="toggleContact()" class="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition duration-300 z-50">
                     <i class="fas fa-comments text-2xl"></i>
                 </button>
 
-                <!-- Kontainer Kontak -->
                 <div id="contactCard" class="hidden fixed bottom-24 right-6 bg-white rounded-xl shadow-md p-6 w-80 z-40">
                     <h2 class="text-xl font-semibold text-gray-900 mb-4">Hubungi Pemilik</h2>
                     <div class="space-y-4">
@@ -424,7 +551,6 @@ function closeLightbox() { document.getElementById('lightbox').classList.add('hi
                     </button>
                 </div>
 
-                <!-- Script Toggle -->
                 <script>
                     function toggleContact() {
                         const contactCard = document.getElementById('contactCard');
@@ -436,14 +562,13 @@ function closeLightbox() { document.getElementById('lightbox').classList.add('hi
         </div>
     </div>
 
-    <!-- Footer -->
     <footer class="bg-blue-100 text-gray-800 py-8 text-center">
         <div class="max-w-4xl mx-auto px-6">
             <p class="text-gray-600 text-sm mt-2">
                 Sistem Pemilihan Kost Ideal dengan metode Weight Product (WP).
             </p>
             <p class="text-gray-500 text-xs mt-2">
-                &copy; <?= date('Y') ?> Rekos - All Rights Reserved
+                &copy; <?= date('Y') ?> Rekos - Hak Cipta Dilindungi
             </p>
         </div>
     </footer>
